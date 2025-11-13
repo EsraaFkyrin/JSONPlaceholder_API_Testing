@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "JSONPlaceholder API – Professional CRUD Testing Suite",
+    "description": "A comprehensive, production-grade API testing collection demonstrating full CRUD operations, request chaining, dynamic data handling, and negative scenarios using Postman.\n\n**Author:** Senior QA Automation Engineer\n**Tools:** Postman v11, REST, JSON, HTTP\n**Coverage:** 100% CRUD + Negative Testing\n**Last Updated:** November 13, 2025",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET - Retrieve All Posts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is array with 100 items\", () => {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.be.an('array');",
+              "    pm.expect(data.length).to.eql(100);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST - Create New Post",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.environment.set('post_title', 'Professional Post by Ahmed');",
+              "pm.environment.set('post_body', 'This is a production-grade test post for API validation.');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", () => pm.response.to.have.status(201));",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "pm.test(\"Title is correct\", () => pm.expect(jsonData.title).to.eql(pm.environment.get('post_title')));",
+              "pm.test(\"Body is correct\", () => pm.expect(jsonData.body).to.eql(pm.environment.get('post_body')));",
+              "pm.test(\"userId is 99\", () => pm.expect(jsonData.userId).to.equal(99));",
+              "",
+              "pm.test(\"Save ID to globals for chaining\", () => {",
+              "    pm.expect(jsonData.id).to.be.a('number');",
+              "    pm.globals.set('new_post_id', jsonData.id);",
+              "    console.log('New Post ID saved to GLOBALS:', jsonData.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"{{post_title}}\",\n    \"body\": \"{{post_body}}\",\n    \"userId\": 99\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/posts",
+          "host": ["{{base_url}}"],
+          "path": ["posts"]
+        }
+      }
+    },
+    {
+      "name": "PUT - Full Update Post",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const id = pm.globals.get('new_post_id');",
+              "if (!id) throw new Error('Run POST first!');",
+              "console.log('PUT → Updating post ID:', id);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", () => pm.response.to.have.status(200));",
+              "",
+              "const data = pm.response.json();",
+              "",
+              "pm.test(\"Title fully replaced\", () => pm.expect(data.title).to.eql('FULL UPDATE: Professional Replace'));",
+              "pm.test(\"Body fully replaced\", () => pm.expect(data.body).to.eql('This post was completely replaced using PUT.'));",
+              "pm.test(\"ID unchanged\", () => pm.expect(data.id).to.equal(parseInt(pm.globals.get('new_post_id'))));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"FULL UPDATE: Professional Replace\",\n    \"body\": \"This post was completely replaced using PUT.\",\n    \"userId\": 99\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/posts/{{$global new_post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{$global new_post_id}}"]
+        }
+      }
+    },
+    {
+      "name": "PATCH - Partial Update Post",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const id = pm.globals.get('new_post_id');",
+              "if (!id) throw new Error('Run POST first!');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", () => pm.response.to.have.status(200));",
+              "",
+              "const data = pm.response.json();",
+              "",
+              "pm.test(\"Title partially updated\", () => pm.expect(data.title).to.eql('PATCHED: Title Only'));",
+              "pm.test(\"Body unchanged\", () => pm.expect(data.body).to.include('completely replaced'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"PATCHED: Title Only\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/posts/{{$global new_post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{$global new_post_id}}"]
+        }
+      }
+    },
+    {
+      "name": "DELETE - Remove Post",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const id = pm.globals.get('new_post_id');",
+              "if (!id) throw new Error('Run POST first!');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response is empty object\", () => pm.expect(pm.response.json()).to.eql({}));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/{{$global new_post_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "{{$global new_post_id}}"]
+        }
+      }
+    },
+    {
+      "name": "NEGATIVE - GET Invalid Post ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/posts/999999",
+          "host": ["{{base_url}}"],
+          "path": ["posts", "999999"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404 Not Found\", () => pm.response.to.have.status(404));",
+              "pm.test(\"Response is empty object\", () => pm.expect(pm.response.json()).to.eql({}));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://jsonplaceholder.typicode.com",
+      "type": "string"
+    }
+  ]
+}
